@@ -14,6 +14,7 @@ import (
 	"github.com/axellelanca/urlshortener/internal/repository"
 	"github.com/axellelanca/urlshortener/internal/services"
 	"github.com/axellelanca/urlshortener/internal/workers"
+	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
 	"gorm.io/driver/sqlite" // Driver SQLite pour GORM
 	"gorm.io/gorm"
@@ -62,15 +63,9 @@ puis lance le serveur HTTP.`,
 
 		log.Printf("Moniteur d'URLs démarré avec un intervalle de %v.", monitorInterval)
 
+		router := gin.Default()
+		api.RegisterRoutes(router, linkService, clickService, clickEvents)
 
-		// TODO Lancez le moniteur dans sa propre goroutine.
-
-		log.Printf("Moniteur d'URLs démarré avec un intervalle de %v.", monitorInterval)
-
-		// TODO : Configurer le routeur Gin et les handlers API.
-		// Passez les services nécessaires aux fonctions de configuration des routes.
-
-		// Pas toucher au log
 		log.Println("Routes API configurées.")
 
 		// Créer le serveur HTTP Gin
