@@ -9,13 +9,13 @@ type Click struct {
 	LinkID    uint      `gorm:"index"`             // Clé étrangère vers la table 'links', indexée pour des requêtes efficaces
 	Link      Link      `gorm:"foreignKey:LinkID"` // Relation GORM: indique que LinkID est une FK vers le champ ID de Link
 	Timestamp time.Time // Horodatage précis du clic
-	UserAgent string    `gorm:"size:255"` // User-Agent de l'utilisateur qui a cliqué (informations sur le navigateur/OS)
-	IPAddress string    `gorm:"size:50"`  // Adresse IP de l'utilisateur
+	UserAgent string    `gorm:"size:255"` // User-Agent de l'utilisateur qui a cliqué
+	IP string    `gorm:"size:50"`  // Adresse IP de l'utilisateur
 }
 
 type ClickEvent struct {
 	LinkID    uint      // ID du lien ajouté par l'utilisateur
 	Timestamp time.Time // Heure de l'event
-	UserAgent string    // User-Agent du navigateur
-	IPAddress string    // Adresse IP de l'utilisateur
+	UserAgent string    // Referrer du navigateur
+	IP string    // Adresse IP de l'utilisateur
 }

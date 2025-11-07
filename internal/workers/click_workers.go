@@ -37,12 +37,12 @@ func clickWorker(workerID int, clickEventsChan <-chan models.ClickEvent, clickRe
 			LinkID:    event.LinkID,
 			Timestamp: event.Timestamp,
 			UserAgent: event.UserAgent,
-			IPAddress: event.IPAddress,
+			IP: event.IP,
 		}
 
 		// Validation minimale
 		if click.LinkID == 0 {
-			log.Printf("⚠️  Worker %d — événement de click invalide : LinkID=%d — UserAgent=%q — IP=%q", workerID, click.LinkID, click.UserAgent, click.IPAddress)
+			log.Printf("⚠️  Worker %d — événement de click invalide : LinkID=%d — UserAgent=%q — IP=%q", workerID, click.LinkID, click.UserAgent, click.IP)
 			continue
 		}
 
