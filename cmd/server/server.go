@@ -1,26 +1,17 @@
 package server
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	cmd2 "github.com/axellelanca/urlshortener/cmd"
-	"github.com/axellelanca/urlshortener/internal/api"
-	"github.com/axellelanca/urlshortener/internal/models"
 	"github.com/axellelanca/urlshortener/internal/monitor"
-	"github.com/axellelanca/urlshortener/internal/repository"
-	"github.com/axellelanca/urlshortener/internal/services"
-	"github.com/axellelanca/urlshortener/internal/workers"
-	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
-	"gorm.io/driver/sqlite" // Driver SQLite pour GORM
-	"gorm.io/gorm"
+	// Driver SQLite pour GORM
 )
 
 // RunServerCmd représente la commande 'run-server' de Cobra.
@@ -32,8 +23,10 @@ var RunServerCmd = &cobra.Command{
 démarre les workers asynchrones pour les clics et le moniteur d'URLs,
 puis lance le serveur HTTP.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// TODO : créer une variable qui stock la configuration chargée globalement via cmd.cfg
-		// Ne pas oublier la gestion d'erreur et faire un fatalF
+		cfg := cmd2.Cfg
+		if cfg == nil {
+			log.Fatal("Erreur: configuration globale non chargée (cmd2.Cfg est nil)")
+		}
 
 		// TODO : Initialiser la connexion à la bBDD
 
