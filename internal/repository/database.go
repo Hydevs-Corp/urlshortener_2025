@@ -3,9 +3,12 @@ package repository
 import (
 	"log"
 
+	"time"
+
 	"github.com/spf13/viper"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 var db *gorm.DB
@@ -26,7 +29,19 @@ func ConnectDatabase() *gorm.DB {
 		path = "url_shortener.db"
 	}
 
-	database, err := gorm.Open(sqlite.Open(path), &gorm.Config{})
+	// Configure GORM logger to ignore ErrRecordNotFound logs so the console
+	// isn't cluttered with expected "record not found" messages.
+	newLogger := logger.New(
+		log.New(log.Writer(), "", log.LstdFlags),
+		logger.Config{
+			SlowThreshold:             time.Second,
+			LogLevel:                  logger.Warn,
+			IgnoreRecordNotFoundError: true,
+			Colorful:                  false,
+		},
+	)
+
+	database, err := gorm.Open(sqlite.Open(path), &gorm.Config{Logger: newLogger})
 	if err != nil {
 		log.Fatalf("failed to connect database (%s): %v", path, err)
 	}
