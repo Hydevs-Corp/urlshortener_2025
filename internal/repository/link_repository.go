@@ -5,7 +5,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// *DONE LinkRepository est une interface qui définit les méthodes d'accès aux données
+// LinkRepository est une interface qui définit les méthodes d'accès aux données
 // pour les opérations CRUD sur les liens.
 // L'implémenter avec les méthodes nécessaires
 
