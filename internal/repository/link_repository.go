@@ -49,4 +49,5 @@ type LinkRepository interface {
     CreateLink(link *models.Link) error
     GetLinkByShortCode(shortCode string) (*models.Link, error)
     GetLinkByID(id uint) (*models.Link, error)
+	CountClicksByLinkID(linkID uint) (int, error)
 }
