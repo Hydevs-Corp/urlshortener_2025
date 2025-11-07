@@ -13,6 +13,7 @@ import (
 	"github.com/axellelanca/urlshortener/internal/monitor"
 	"github.com/axellelanca/urlshortener/internal/repository"
 	"github.com/axellelanca/urlshortener/internal/services"
+	"github.com/axellelanca/urlshortener/internal/workers"
 	"github.com/spf13/cobra"
 	"gorm.io/driver/sqlite" // Driver SQLite pour GORM
 	"gorm.io/gorm"
@@ -48,9 +49,12 @@ puis lance le serveur HTTP.`,
 
 		log.Println("Services métiers initialisés.")
 
-		// TODO : Initialiser le channel ClickEventsChannel (api/handlers) des événements de clic et lancer les workers (StartClickWorkers).
-		// Le channel est bufferisé avec la taille configurée.
-		// Passez le channel et le clickRepo aux workers.
+		clickEvents := make(chan api.ClickEvent, cfg.Analytics.BufferSize)
+		api.ClickEventsChannel = clickEvents
+		workers.StartClickWorkers(clickEvents, clickRepo, cfg.Analytics.WorkerCount)
+
+		log.Printf("Channel d'événements de clic initialisé avec un buffer de %d. %d worker(s) de clics démarré(s).",
+			cfg.Analytics.BufferSize, cfg.Analytics.WorkerCount)
 
 		// TODO : Remplacer les XXX par les bonnes variables
 		log.Printf("Channel d'événements de clic initialisé avec un buffer de %d. %d worker(s) de clics démarré(s).",
