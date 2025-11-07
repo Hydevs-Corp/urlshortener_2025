@@ -9,9 +9,11 @@ import (
 	"time"
 
 	cmd2 "github.com/axellelanca/urlshortener/cmd"
+	"github.com/axellelanca/urlshortener/internal/models"
 	"github.com/axellelanca/urlshortener/internal/monitor"
 	"github.com/spf13/cobra"
-	// Driver SQLite pour GORM
+	"gorm.io/driver/sqlite" // Driver SQLite pour GORM
+	"gorm.io/gorm"
 )
 
 // RunServerCmd représente la commande 'run-server' de Cobra.
@@ -28,7 +30,11 @@ puis lance le serveur HTTP.`,
 			log.Fatal("Erreur: configuration globale non chargée (cmd2.Cfg est nil)")
 		}
 
-		// TODO : Initialiser la connexion à la bBDD
+		db, err := gorm.Open(sqlite.Open(cfg.Database.Name), &gorm.Config{})
+		if err != nil {
+			log.Fatalf("Erreur lors de l'ouverture de la base SQLite: %v", err)
+		}
+		db.AutoMigrate(&models.Link{}, &models.Click{})
 
 		// TODO : Initialiser les repositories.
 		// Créez des instances de GormLinkRepository et GormClickRepository.
