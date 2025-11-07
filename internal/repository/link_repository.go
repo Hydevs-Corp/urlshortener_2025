@@ -36,7 +36,8 @@ func (r *GormLinkRepository) GetLinkByShortCode(shortCode string) (*models.Link,
 
 func (r *GormLinkRepository) GetAllLinks() ([]models.Link, error) {
 	var links []models.Link
-	if err := r.db.Find(&links).Error; err != nil {
+	err := r.db.Find(&links).Error
+	if err != nil {
 		return nil, err
 	}
 	return links, nil
@@ -44,7 +45,8 @@ func (r *GormLinkRepository) GetAllLinks() ([]models.Link, error) {
 
 func (r *GormLinkRepository) CountClicksByLinkID(linkID uint) (int, error) {
 	var count int64
-	if err := r.db.Model(&models.Click{}).Where("link_id = ?", linkID).Count(&count).Error; err != nil {
+	err := r.db.Model(&models.Click{}).Where("link_id = ?", linkID).Count(&count).Error
+	if err != nil {
 		return 0, err
 	}
 	return int(count), nil
@@ -52,7 +54,8 @@ func (r *GormLinkRepository) CountClicksByLinkID(linkID uint) (int, error) {
 
 func (r *GormLinkRepository) GetLinkByID(id uint) (*models.Link, error) {
 	var link models.Link
-	if err := r.db.First(&link, id).Error; err != nil {
+	err := r.db.First(&link, id).Error
+	if err != nil {
 		return nil, err
 	}
 	return &link, nil
