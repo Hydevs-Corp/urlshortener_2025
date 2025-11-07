@@ -9,26 +9,26 @@ import (
 	"github.com/axellelanca/urlshortener/internal/models"
 	"github.com/axellelanca/urlshortener/internal/services"
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 	"gorm.io/gorm" // Pour gérer gorm.ErrRecordNotFound
 )
 
-
-// TODO Créer une variable ClickEventsChannel qui est un chan de type ClickEvent
+// Crée une variable ClickEventsChannel qui est un chan de type ClickEvent
 // ClickEventsChannel est le channel global (ou injecté) utilisé pour envoyer les événements de clic
 // aux workers asynchrones. Il est bufferisé pour ne pas bloquer les requêtes de redirection.
-
+var ClickEventsChannel chan models.ClickEvent
 
 // SetupRoutes configure toutes les routes de l'API Gin et injecte les dépendances nécessaires
 func SetupRoutes(router *gin.Engine, linkService *services.LinkService) {
 	// Le channel est initialisé ici.
 	if ClickEventsChannel == nil {
-		// TODO Créer le channel ici (make), il doit être bufférisé
-		// La taille du buffer doit être configurable via la donnée récupérer avec Viper
-		ClickEventsChannel =
+		// Crée le channel ici (make) bufférisé
+		// La taille du buffer est configurable via la donnée récupérée avec Viper
+		ClickEventsChannel = make(chan models.ClickEvent, cfg.Analytics.BufferSize)
 	}
 
-	// TODO : Route de Health Check , /health
-	router.GET()
+	// Route de Health Check , /health
+	router.GET("/health", HealthCheckHandler)
 
 	// TODO : Routes de l'API
 	// Doivent être au format /api/v1/
@@ -68,7 +68,7 @@ func CreateShortLinkHandler(linkService *services.LinkService) gin.HandlerFunc {
 		c.JSON(XXX, gin.H{
 			"short_code":     link.ShortCode,
 			"long_url":       link.LongURL,
-			"full_short_url": "http://localhost:8080/" + link.ShortCode, // TODO: Utiliser cfg.Server.BaseURL ici
+			"full_short_url": cfg.Server.BaseURL + link.ShortCode, // Concatène l'URL de base avec le short code
 		})
 	}
 }
