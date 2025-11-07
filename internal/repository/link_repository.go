@@ -44,3 +44,9 @@ func (r *GormLinkRepository) CountClicksByLinkID(linkID uint) (int, error) { // 
 	}
 	return int(count), nil
 }
+
+type LinkRepository interface {
+    CreateLink(link *models.Link) error
+    GetLinkByShortCode(shortCode string) (*models.Link, error)
+    GetLinkByID(id uint) (*models.Link, error)
+}
