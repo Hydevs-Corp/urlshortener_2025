@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -68,15 +69,18 @@ puis lance le serveur HTTP.`,
 
 		log.Println("Routes API configurées.")
 
-		// Créer le serveur HTTP Gin
 		serverAddr := fmt.Sprintf(":%d", cfg.Server.Port)
 		srv := &http.Server{
 			Addr:    serverAddr,
 			Handler: router,
 		}
 
-		// TODO : Démarrer le serveur Gin dans une goroutine anonyme pour ne pas bloquer.
-		// Pensez à logger des ptites informations...
+		go func() {
+			log.Printf("Serveur lancé sur %s", serverAddr)
+			if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+				log.Fatalf("Erreur serveur: %v", err)
+			}
+		}()
 
 		// Gére l'arrêt propre du serveur (graceful shutdown).
 		// TODO Créez un channel pour les signaux OS (SIGINT, SIGTERM), bufferisé à 1.
