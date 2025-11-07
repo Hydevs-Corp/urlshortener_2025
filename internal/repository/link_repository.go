@@ -26,7 +26,8 @@ func (r *GormLinkRepository) GetLinkByShortCode(shortCode string) (*models.Link,
 	err := r.db.Where("short_code = ?", shortCode).First(&link).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, nil
+			// Return the GORM error so callers can detect "not found" reliably
+			return nil, gorm.ErrRecordNotFound
 		}
 		return nil, err
 	}
