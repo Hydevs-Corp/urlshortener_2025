@@ -9,7 +9,7 @@ package models
 
 type Link struct {
 	ID        uint   `gorm:"primaryKey"`
-	Shortcode string `gorm:"size:10;uniqueIndex;not null"`
+	ShortCode string `gorm:"size:10;uniqueIndex;not null"`
 	LongURL   string `gorm:"not null"`
 	CreatedAt int64  `gorm:"autoCreateTime"`
 }
