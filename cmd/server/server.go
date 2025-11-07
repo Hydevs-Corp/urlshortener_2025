@@ -11,6 +11,7 @@ import (
 	cmd2 "github.com/axellelanca/urlshortener/cmd"
 	"github.com/axellelanca/urlshortener/internal/models"
 	"github.com/axellelanca/urlshortener/internal/monitor"
+	"github.com/axellelanca/urlshortener/internal/repository"
 	"github.com/spf13/cobra"
 	"gorm.io/driver/sqlite" // Driver SQLite pour GORM
 	"gorm.io/gorm"
@@ -36,10 +37,9 @@ puis lance le serveur HTTP.`,
 		}
 		db.AutoMigrate(&models.Link{}, &models.Click{})
 
-		// TODO : Initialiser les repositories.
-		// Créez des instances de GormLinkRepository et GormClickRepository.
+		linkRepo := repository.NewLinkRepository(db)
+		clickRepo := repository.NewClickRepository(db)
 
-		// Laissez le log
 		log.Println("Repositories initialisés.")
 
 		// TODO : Initialiser les services métiers.
