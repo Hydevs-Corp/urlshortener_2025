@@ -12,6 +12,7 @@ import (
 	"github.com/axellelanca/urlshortener/internal/models"
 	"github.com/axellelanca/urlshortener/internal/monitor"
 	"github.com/axellelanca/urlshortener/internal/repository"
+	"github.com/axellelanca/urlshortener/internal/services"
 	"github.com/spf13/cobra"
 	"gorm.io/driver/sqlite" // Driver SQLite pour GORM
 	"gorm.io/gorm"
@@ -42,10 +43,9 @@ puis lance le serveur HTTP.`,
 
 		log.Println("Repositories initialisés.")
 
-		// TODO : Initialiser les services métiers.
-		// Créez des instances de LinkService et ClickService, en leur passant les repositories nécessaires.
+		linkService := services.NewLinkService(linkRepo)
+		clickService := services.NewClickService(clickRepo)
 
-		// Laissez le log
 		log.Println("Services métiers initialisés.")
 
 		// TODO : Initialiser le channel ClickEventsChannel (api/handlers) des événements de clic et lancer les workers (StartClickWorkers).
