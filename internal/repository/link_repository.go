@@ -9,19 +9,24 @@ import (
 // pour les opérations CRUD sur les liens.
 // L'implémenter avec les méthodes nécessaires
 
-type GormLinkRepository struct { 
+type GormLinkRepository struct {
 	db *gorm.DB
 }
 
-func NewLinkRepository(db *gorm.DB) *GormLinkRepository { 
+// GetLinkByID implements LinkRepository.
+func (r *GormLinkRepository) GetLinkByID(id uint) (*models.Link, error) {
+	panic("unimplemented")
+}
+
+func NewLinkRepository(db *gorm.DB) *GormLinkRepository {
 	return &GormLinkRepository{db: db}
 }
 
-func (r *GormLinkRepository) CreateLink(link *models.Link) error { 
+func (r *GormLinkRepository) CreateLink(link *models.Link) error {
 	return r.db.Create(link).Error
 }
 
-func (r *GormLinkRepository) GetLinkByShortCode(shortCode string) (*models.Link, error) { 
+func (r *GormLinkRepository) GetLinkByShortCode(shortCode string) (*models.Link, error) {
 	var link models.Link
 	if err := r.db.Where("shortcode = ?", shortCode).First(&link).Error; err != nil {
 		return nil, err
@@ -29,7 +34,7 @@ func (r *GormLinkRepository) GetLinkByShortCode(shortCode string) (*models.Link,
 	return &link, nil
 }
 
-func (r *GormLinkRepository) GetAllLinks() ([]models.Link, error) { 
+func (r *GormLinkRepository) GetAllLinks() ([]models.Link, error) {
 	var links []models.Link
 	if err := r.db.Find(&links).Error; err != nil {
 		return nil, err
@@ -37,7 +42,7 @@ func (r *GormLinkRepository) GetAllLinks() ([]models.Link, error) {
 	return links, nil
 }
 
-func (r *GormLinkRepository) CountClicksByLinkID(linkID uint) (int, error) { 
+func (r *GormLinkRepository) CountClicksByLinkID(linkID uint) (int, error) {
 	var count int64
 	if err := r.db.Model(&models.Click{}).Where("link_id = ?", linkID).Count(&count).Error; err != nil {
 		return 0, err
@@ -47,11 +52,12 @@ func (r *GormLinkRepository) CountClicksByLinkID(linkID uint) (int, error) {
 
 func (r *GormLinkRepository) GetLinkByID(id uint) (*models.Link, error) {
 	var link models.Link
-	if err := r.db.First(&link, id).Error; err != nil {
-		return nil, err
-	}
+	err := r.db.First(&link, id).Error; err != nil {
+	turn nil, err
+	
 	return &link, nil
 }
+
 
 type LinkRepository interface {
 	GetAllLinks() ([]models.Link, error)

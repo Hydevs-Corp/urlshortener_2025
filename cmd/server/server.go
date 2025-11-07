@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	cmd2 "github.com/axellelanca/urlshortener/cmd"
+	"github.com/axellelanca/urlshortener/internal/api"
 	"github.com/axellelanca/urlshortener/internal/models"
 	"github.com/axellelanca/urlshortener/internal/monitor"
 	"github.com/axellelanca/urlshortener/internal/repository"
@@ -22,50 +24,47 @@ import (
 	"gorm.io/gorm"
 )
 
-// RunServerCmd représente la commande 'run-server' de Cobra.
+// RunServerCmd represents the 'run-server' Cobra command.
 var RunServerCmd = &cobra.Command{
 	Use:   "run-server",
-	Short: "Lance le serveur API de raccourcissement d'URLs et les processus de fond.",
-	Long: `Cette commande initialise la base de données, configure les APIs, démarre les workers asynchrones pour les clics et le moniteur d'URLs, puis lance le serveur HTTP.`,
+	Short: "Start the URL shortener API server and background processes.",
+	Long:  `This command initializes the database, configures the APIs, starts background click workers and the URL monitor, then starts the HTTP server.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		cfg := cmd2.Cfg
 		if cfg == nil {
-			log.Fatal("Erreur: configuration globale non chargée (cmd2.Cfg est nil)")
+			log.Fatal("Error: global configuration is not loaded (cmd2.Cfg is nil)")
 		}
 
 		db, err := gorm.Open(sqlite.Open(cfg.Database.Name), &gorm.Config{})
 		if err != nil {
-			log.Fatalf("Erreur lors de l'ouverture de la base SQLite: %v", err)
+			log.Fatalf("Failed to open SQLite database: %v", err)
 		}
-		db.AutoMigrate(&models.Link{}, &models.Click{})
+		if err := db.AutoMigrate(&models.Link{}, &models.Click{}); err != nil {
+			log.Fatalf("AutoMigrate error: %v", err)
+		}
 
 		linkRepo := repository.NewLinkRepository(db)
 		clickRepo := repository.NewClickRepository(db)
-
-		log.Println("Repositories initialisés.")
+		log.Println("Repositories initialized.")
 
 		linkService := services.NewLinkService(linkRepo)
 		clickService := services.NewClickService(clickRepo)
-
-		log.Println("Services métiers initialisés.")
+		log.Println("Domain services initialized.")
 
 		clickEvents := make(chan api.ClickEvent, cfg.Analytics.BufferSize)
 		api.ClickEventsChannel = clickEvents
 		workers.StartClickWorkers(clickEvents, clickRepo, cfg.Analytics.WorkerCount)
-
-		log.Printf("Channel d'événements de clic initialisé avec un buffer de %d. %d worker(s) de clics démarré(s).",
+		log.Printf("Click event channel initialized with buffer %d. Started %d click worker(s).",
 			cfg.Analytics.BufferSize, cfg.Analytics.WorkerCount)
 
 		monitorInterval := time.Duration(cfg.Monitor.IntervalMinutes) * time.Minute
 		urlMonitor := monitor.NewUrlMonitor(linkRepo, monitorInterval)
 		go urlMonitor.Start()
-
-		log.Printf("Moniteur d'URLs démarré avec un intervalle de %v.", monitorInterval)
+		log.Printf("URL monitor started with interval %v.", monitorInterval)
 
 		router := gin.Default()
 		api.RegisterRoutes(router, linkService, clickService, clickEvents)
-
-		log.Println("Routes API configurées.")
+		log.Println("API routes configured.")
 
 		serverAddr := fmt.Sprintf(":%d", cfg.Server.Port)
 		srv := &http.Server{
@@ -74,22 +73,27 @@ var RunServerCmd = &cobra.Command{
 		}
 
 		go func() {
-			log.Printf("Serveur lancé sur %s", serverAddr)
+			log.Printf("HTTP server listening on %s", serverAddr)
 			if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-				log.Fatalf("Erreur serveur: %v", err)
+				log.Fatalf("Server error: %v", err)
 			}
 		}()
 
 		quit := make(chan os.Signal, 1)
 		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-
 		<-quit
-		log.Println("Signal d'arrêt reçu. Arrêt du serveur...")
+		log.Println("Shutdown signal received. Stopping server...")
 
-		log.Println("Arrêt en cours... Donnez un peu de temps aux workers pour finir.")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := srv.Shutdown(ctx); err != nil {
+			log.Printf("Server shutdown error: %v", err)
+		}
+
+		log.Println("Shutting down... giving workers time to finish.")
 		time.Sleep(5 * time.Second)
 
-		log.Println("Serveur arrêté proprement.")
+		log.Println("Server stopped cleanly.")
 	},
 }
 
