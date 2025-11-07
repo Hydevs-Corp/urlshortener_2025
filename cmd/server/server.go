@@ -18,12 +18,11 @@ import (
 	"github.com/axellelanca/urlshortener/internal/workers"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
-	"gorm.io/driver/sqlite" // Driver SQLite pour GORM
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
 // RunServerCmd représente la commande 'run-server' de Cobra.
-// C'est le point d'entrée pour lancer le serveur de l'application.
 var RunServerCmd = &cobra.Command{
 	Use:   "run-server",
 	Short: "Lance le serveur API de raccourcissement d'URLs et les processus de fond.",
