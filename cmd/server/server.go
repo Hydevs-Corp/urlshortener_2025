@@ -56,14 +56,12 @@ puis lance le serveur HTTP.`,
 		log.Printf("Channel d'événements de clic initialisé avec un buffer de %d. %d worker(s) de clics démarré(s).",
 			cfg.Analytics.BufferSize, cfg.Analytics.WorkerCount)
 
-		// TODO : Remplacer les XXX par les bonnes variables
-		log.Printf("Channel d'événements de clic initialisé avec un buffer de %d. %d worker(s) de clics démarré(s).",
-			XXX, XXX)
+		monitorInterval := time.Duration(cfg.Monitor.IntervalMinutes) * time.Minute
+		urlMonitor := monitor.NewUrlMonitor(linkRepo, monitorInterval)
+		go urlMonitor.Start()
 
-		// TODO : Initialiser et lancer le moniteur d'URLs.
-		// Utilisez l'intervalle configuré
-		monitorInterval := time.Duration(XXX) * time.Minute
-		urlMonitor := monitor.NewUrlMonitor() // Le moniteur a besoin du linkRepo et de l'interval
+		log.Printf("Moniteur d'URLs démarré avec un intervalle de %v.", monitorInterval)
+
 
 		// TODO Lancez le moniteur dans sa propre goroutine.
 
