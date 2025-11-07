@@ -94,11 +94,12 @@ func (m *UrlMonitor) isUrlAccessible(url string) bool {
 	// Effectue une requête HEAD (plus légère que GET) sur l'URL.
 	// Un code de statut 2xx ou 3xx indique que l'URL est accessible.
 	resp, err := client.Head(url)
-	defer resp.Body.Close()
 	if err != nil {
 		log.Printf("[MONITOR] Erreur d'accès à l'URL '%s': %v", url, err)
 		return false
 	}
+	
+	defer resp.Body.Close()
 	
 	// Déterminer l'accessibilité basée sur le code de statut HTTP.
 	return resp.StatusCode >= 200 && resp.StatusCode < 400 // Codes 2xx ou 3xx
