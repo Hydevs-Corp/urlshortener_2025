@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -26,9 +27,7 @@ import (
 var RunServerCmd = &cobra.Command{
 	Use:   "run-server",
 	Short: "Lance le serveur API de raccourcissement d'URLs et les processus de fond.",
-	Long: `Cette commande initialise la base de données, configure les APIs,
-démarre les workers asynchrones pour les clics et le moniteur d'URLs,
-puis lance le serveur HTTP.`,
+	Long: `Cette commande initialise la base de données, configure les APIs, démarre les workers asynchrones pour les clics et le moniteur d'URLs, puis lance le serveur HTTP.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		cfg := cmd2.Cfg
 		if cfg == nil {
@@ -82,16 +81,12 @@ puis lance le serveur HTTP.`,
 			}
 		}()
 
-		// Gére l'arrêt propre du serveur (graceful shutdown).
-		// TODO Créez un channel pour les signaux OS (SIGINT, SIGTERM), bufferisé à 1.
-		quit :=
-			signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM) // Attendre Ctrl+C ou signal d'arrêt
+		quit := make(chan os.Signal, 1)
+		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
-		// Bloquer jusqu'à ce qu'un signal d'arrêt soit reçu.
 		<-quit
 		log.Println("Signal d'arrêt reçu. Arrêt du serveur...")
 
-		// Arrêt propre du serveur HTTP avec un timeout.
 		log.Println("Arrêt en cours... Donnez un peu de temps aux workers pour finir.")
 		time.Sleep(5 * time.Second)
 
