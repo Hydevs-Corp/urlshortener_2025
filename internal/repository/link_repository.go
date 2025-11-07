@@ -13,10 +13,10 @@ type GormLinkRepository struct {
 	db *gorm.DB
 }
 
-// GetLinkByID implements LinkRepository.
-func (r *GormLinkRepository) GetLinkByID(id uint) (*models.Link, error) {
-	panic("unimplemented")
-}
+// // GetLinkByID implements LinkRepository.
+// func (r *GormLinkRepository) GetLinkByID(id uint) (*models.Link, error) {
+// 	panic("unimplemented")
+// }
 
 func NewLinkRepository(db *gorm.DB) *GormLinkRepository {
 	return &GormLinkRepository{db: db}
@@ -52,9 +52,9 @@ func (r *GormLinkRepository) CountClicksByLinkID(linkID uint) (int, error) {
 
 func (r *GormLinkRepository) GetLinkByID(id uint) (*models.Link, error) {
 	var link models.Link
-	err := r.db.First(&link, id).Error; err != nil {
-	turn nil, err
-	
+	if err := r.db.First(&link, id).Error; err != nil {
+		return nil, err
+	}
 	return &link, nil
 }
 
