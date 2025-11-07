@@ -51,7 +51,7 @@ func (s *LinkService) CreateLink(longURL string) (*models.Link, error) {
 	var err error
 	const maxRetries = 5
 
-	for i := 0; i < maxRetries; i++ {
+	for i := range maxRetries {
 		shortCode, err = s.GenerateShortCode(6)
 		if err != nil {
 			return nil, fmt.Errorf("error generating short code: %w", err)
