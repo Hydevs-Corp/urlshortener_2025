@@ -7,12 +7,12 @@ import (
 	"gorm.io/gorm"
 )
 
-// TODO ClickRepository est une interface qui définit les méthodes d'accès aux données
+// ClickRepository est une interface qui définit les méthodes d'accès aux données
 // pour les opérations sur les clics. Cette abstraction permet à la couche service
 // de rester indépendante de l'implémentation spécifique de la base de données.
-// Implémenter l'interface avec les méthodes nécessaires.
 type ClickRepository interface {
-	// Utilisé par LinkService pour les stats
+	CreateClick(click *models.Click) error           // Crée un nouveau click dans la base de données
+	CountClicksByLinkID(linkID uint) (int, error)    // Compte le nombre de clicks pour un lien donné
 }
 
 // GormClickRepository est l'implémentation de l'interface ClickRepository utilisant GORM.
@@ -29,16 +29,20 @@ func NewClickRepository(db *gorm.DB) *GormClickRepository {
 // CreateClick insère un nouvel enregistrement de clic dans la base de données.
 // Elle reçoit un pointeur vers une structure models.Click et la persiste en utilisant GORM.
 func (r *GormClickRepository) CreateClick(click *models.Click) error {
-	// TODO : Utiliser GORM pour créer une nouvelle entrée dans la table "clicks"
-
+	result := r.db.Create(click)
+	if result.Error != nil {
+		return fmt.Errorf("Erreur du click ! Error : %w", result.Error) //Retourne une erreur formatée en cas d'échec
+	} 
+	return nil
 }
 
-// CountClicksByLinkID compte le nombre total de clics pour un ID de lien donné.
+// CountClicksByLinkID compte le nombre total de clicks pour un ID de lien donné.
 // Cette méthode est utilisée pour fournir des statistiques pour une URL courte.
 func (r *GormClickRepository) CountClicksByLinkID(linkID uint) (int, error) {
 	var count int64 // GORM retourne un int64 pour les décomptes
-	// TODO : Utiliser GORM pour compter les enregistrements dans la table 'clicks'
-	// où 'LinkID' correspond à l'ID de lien fourni.
-
-	return int(count), nil // Convert the int64 count to an int
+	result := r.db.Model(&models.Click{}).Where("link_id = ?", linkID).Count(&count)
+	if result.Error != nil {
+		return 0, fmt.Errorf("Erreur lors du comptage des clicks pour le lien %d: %w", linkID, result.Error) //Retourne une erreur formatée en cas d'échec
+	}
+	return int(count), nil
 }
