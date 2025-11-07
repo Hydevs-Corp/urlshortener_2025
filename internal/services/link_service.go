@@ -50,33 +50,39 @@ func (s *LinkService) CreateLink(longURL string) (*models.Link, error) {
 	var shortCode string
 	var err error
 	const maxRetries = 5
-
-	for i := range maxRetries {
+	var unique bool
+	for i := 0; i < maxRetries; i++ {
 		shortCode, err = s.GenerateShortCode(6)
 		if err != nil {
 			return nil, fmt.Errorf("error generating short code: %w", err)
 		}
 
 		_, err = s.linkRepo.GetLinkByShortCode(shortCode)
-
-		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				break            
-			}
-			return nil, fmt.Errorf("database error checking short code uniqueness: %w", err)
+		if err == nil {
+			// Le code court existe déjà, générer un nouveau
+			log.Printf("Le code court '%s' existe déjà, nouvelle génération (%d/%d)...", shortCode, i+1, maxRetries)
+			continue
 		}
 
-		log.Printf("Short code '%s' already exists, retrying generation (%d/%d)...", shortCode, i+1, maxRetries)
-	}
-	
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// not found -> unique
+			unique = true
+			break
+		}
 
-	if err != nil {
+		// unexpected database error
+		return nil, fmt.Errorf("database error checking short code uniqueness: %w", err)
+	}
+
+	if !unique {
 		return nil, errors.New("failed to generate a unique short code after maximum retries")
 	}
 
+	// Store the short code without a leading slash. Route/handlers can add the slash
+	// when building full URLs to avoid double-slash issues.
 	link := &models.Link{
 		LongURL:   longURL,
-		ShortCode:  fmt.Sprintf("/%s", shortCode),
+		ShortCode: shortCode,
 		CreatedAt: time.Now().Unix(),
 	}
 
