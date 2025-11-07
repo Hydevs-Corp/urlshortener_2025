@@ -76,7 +76,7 @@ func (s *LinkService) CreateLink(longURL string) (*models.Link, error) { // * DO
 
 	link := &models.Link{ // * DONE
 		LongURL:   longURL,
-		Shortcode:  fmt.Sprintf("/%s", shortCode),
+		ShortCode:  fmt.Sprintf("/%s", shortCode),
 		CreatedAt: time.Now().Unix(),
 	}
 
