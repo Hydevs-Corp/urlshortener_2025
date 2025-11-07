@@ -95,5 +95,5 @@ var RunServerCmd = &cobra.Command{
 }
 
 func init() {
-	// TODO : ajouter la commande
+	cmd2.RootCmd.AddCommand(RunServerCmd)
 }
