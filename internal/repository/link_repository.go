@@ -13,11 +13,6 @@ type GormLinkRepository struct {
 	db *gorm.DB
 }
 
-// // GetLinkByID implements LinkRepository.
-// func (r *GormLinkRepository) GetLinkByID(id uint) (*models.Link, error) {
-// 	panic("unimplemented")
-// }
-
 func NewLinkRepository(db *gorm.DB) *GormLinkRepository {
 	return &GormLinkRepository{db: db}
 }
@@ -28,7 +23,11 @@ func (r *GormLinkRepository) CreateLink(link *models.Link) error {
 
 func (r *GormLinkRepository) GetLinkByShortCode(shortCode string) (*models.Link, error) {
 	var link models.Link
-	if err := r.db.Where("shortcode = ?", shortCode).First(&link).Error; err != nil {
+	err := r.db.Where("short_code = ?", shortCode).First(&link).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return &link, nil
