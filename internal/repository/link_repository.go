@@ -45,6 +45,14 @@ func (r *GormLinkRepository) CountClicksByLinkID(linkID uint) (int, error) {
 	return int(count), nil
 }
 
+func (r *GormLinkRepository) GetLinkByID(id uint) (*models.Link, error) {
+	var link models.Link
+	if err := r.db.First(&link, id).Error; err != nil {
+		return nil, err
+	}
+	return &link, nil
+}
+
 type LinkRepository interface {
 	GetAllLinks() ([]models.Link, error)
     CreateLink(link *models.Link) error

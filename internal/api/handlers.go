@@ -93,13 +93,12 @@ func RedirectHandler(linkService *services.LinkService) gin.HandlerFunc {
 			LinkID:    link.ID,
 			Timestamp: time.Now(),
 			UserAgent: c.Request.UserAgent(),
-			Referrer:  c.Request.Referer(),
 			IP:        c.ClientIP(),
 		}
 
 		select { 
 			case ClickEventsChannel <- clickEvent:
-				// [Succès]
+				return // [Succès]
 			default:
 				log.Printf("Warning: ClickEventsChannel is full, dropping click event for %s.", shortCode)
 		}
