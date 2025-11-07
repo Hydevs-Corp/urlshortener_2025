@@ -22,12 +22,7 @@ var ClickEventsChannel chan models.ClickEvent
 
 // SetupRoutes configure toutes les routes de l'API Gin et injecte les dépendances nécessaires
 func SetupRoutes(router *gin.Engine, linkService *services.LinkService) {
-	// Le channel est initialisé ici.
-	if ClickEventsChannel == nil {
-		// Crée le channel ici (make) bufférisé
-		// La taille du buffer est configurable via la donnée récupérée avec Viper
-		ClickEventsChannel = make(chan models.ClickEvent, cfg.Analytics.BufferSize)
-	}
+	// Le channel n'est plus initialisé ici (il est injecté par server via RegisterRoutes)
 
 	// Route de Health Check , /health
 	router.GET("/health", HealthCheckHandler)
@@ -80,10 +75,16 @@ func CreateShortLinkHandler(linkService *services.LinkService) gin.HandlerFunc {
 			return
 		}
 
+		// Construit l'URL courte complète à partir de l'hôte de la requête
+		host := c.Request.Host
+		if host == "" {
+			host = "localhost:8080"
+		}
+
 		c.JSON(http.StatusCreated, gin.H{
 			"short_code":     link.ShortCode,
 			"long_url":       link.LongURL,
-			"full_short_url": cfg.Server.BaseURL + link.ShortCode, // Concatène l'URL de base avec le short code
+			"full_short_url": "http://" + host + "/" + link.ShortCode,
 		})
 	}
 }
@@ -114,10 +115,11 @@ func RedirectHandler(linkService *services.LinkService) gin.HandlerFunc {
 
 		select {
 		case ClickEventsChannel <- clickEvent:
-			return // [Succès]
+			// enqueued
 		default:
 			log.Printf("Warning: ClickEventsChannel is full, dropping click event for %s.", shortCode)
 		}
+
 		c.Redirect(http.StatusFound, link.LongURL)
 	}
 }

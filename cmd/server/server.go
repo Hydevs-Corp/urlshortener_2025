@@ -35,6 +35,7 @@ var RunServerCmd = &cobra.Command{
 			log.Fatal("Error: global configuration is not loaded (cmd2.Cfg is nil)")
 		}
 
+		// Database init + migrations
 		db, err := gorm.Open(sqlite.Open(cfg.Database.Name), &gorm.Config{})
 		if err != nil {
 			log.Fatalf("Failed to open SQLite database: %v", err)
@@ -43,35 +44,42 @@ var RunServerCmd = &cobra.Command{
 			log.Fatalf("AutoMigrate error: %v", err)
 		}
 
+		// Repositories
 		linkRepo := repository.NewLinkRepository(db)
 		clickRepo := repository.NewClickRepository(db)
 		log.Println("Repositories initialized.")
 
+		// Services
 		linkService := services.NewLinkService(linkRepo)
 		clickService := services.NewClickService(clickRepo)
 		log.Println("Domain services initialized.")
 
-		clickEvents := make(chan api.ClickEvent, cfg.Analytics.BufferSize)
+		// Click events channel + workers (use models.ClickEvent)
+		clickEvents := make(chan models.ClickEvent, cfg.Analytics.BufferSize)
 		api.ClickEventsChannel = clickEvents
-		workers.StartClickWorkers(clickEvents, clickRepo, cfg.Analytics.WorkerCount)
+		workers.StartClickWorkers(cfg.Analytics.WorkerCount, clickEvents, clickRepo)
 		log.Printf("Click event channel initialized with buffer %d. Started %d click worker(s).",
 			cfg.Analytics.BufferSize, cfg.Analytics.WorkerCount)
 
+		// URL monitor
 		monitorInterval := time.Duration(cfg.Monitor.IntervalMinutes) * time.Minute
 		urlMonitor := monitor.NewUrlMonitor(linkRepo, monitorInterval)
 		go urlMonitor.Start()
 		log.Printf("URL monitor started with interval %v.", monitorInterval)
 
+		// Router and routes
 		router := gin.Default()
 		api.RegisterRoutes(router, linkService, clickService, clickEvents)
 		log.Println("API routes configured.")
 
+		// HTTP server
 		serverAddr := fmt.Sprintf(":%d", cfg.Server.Port)
 		srv := &http.Server{
 			Addr:    serverAddr,
 			Handler: router,
 		}
 
+		// Start server
 		go func() {
 			log.Printf("HTTP server listening on %s", serverAddr)
 			if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -79,6 +87,7 @@ var RunServerCmd = &cobra.Command{
 			}
 		}()
 
+		// Graceful shutdown
 		quit := make(chan os.Signal, 1)
 		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 		<-quit
@@ -92,7 +101,6 @@ var RunServerCmd = &cobra.Command{
 
 		log.Println("Shutting down... giving workers time to finish.")
 		time.Sleep(5 * time.Second)
-
 		log.Println("Server stopped cleanly.")
 	},
 }
